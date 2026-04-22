@@ -1,6 +1,7 @@
 name: "Linear Issue Pipeline Example"
 description: "An example pipeline that uses dynamic pipelines and Claude Code to automatically analyse and work on Linear issues."
 emoji: ":linear:"
+color: "#EDE9FE"
 languages:
   - "TypeScript"
 steps:

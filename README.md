@@ -18,6 +18,30 @@ This example demonstrates an **AI-powered issue analysis pipeline** built with B
 5. The handler uses the [Buildkite SDK](https://github.com/buildkite/buildkite-sdk) to **dynamically generate an analysis step** and uploads it with `buildkite-agent pipeline upload`
 6. That step launches Claude Code in a Docker container with access to the codebase, Linear (via the Linear CLI), and GitHub (via `gh` CLI) to analyse and work on the issue
 
+### The handler pattern
+
+The core of the handler is short — read the webhook payload from build metadata, evaluate whether to act, and generate a step with the Buildkite SDK:
+
+```typescript
+// 1. Read the webhook payload that Buildkite stored as build metadata
+const payload = JSON.parse(
+  execSync("buildkite-agent meta-data get buildkite:webhook").toString(),
+);
+
+// 2. Evaluate the condition — create/update action with a matching label?
+const labels = (payload.data.labels ?? []).map((l) => l.name);
+if (!["create", "update"].includes(payload.action) || !labels.includes(process.env.TRIGGER_ON_LABEL)) {
+  process.exit(0);
+}
+
+// 3. Generate a step with the Buildkite SDK and pipe it into `pipeline upload`
+const pipeline = new Pipeline();
+pipeline.addStep({ label: ":linear: Analyse the issue", command: "scripts/claude.sh" });
+execSync("buildkite-agent pipeline upload", { input: pipeline.toYAML() });
+```
+
+The real handler extracts the issue ID, title, and description between steps 2 and 3 so Claude has them on `process.env` — see [`scripts/handler.ts`](./scripts/handler.ts).
+
 The key Buildkite features at play:
 
 - **`buildkite-agent pipeline upload`** — adding steps to a running build based on runtime conditions
@@ -42,7 +66,7 @@ To run this yourself, you'll need:
 
 1. Fork this repo
 2. Create a Buildkite pipeline pointing to your fork with webhook support enabled
-3. In Linear, create a webhook pointing to your Buildkite pipeline's webhook URL, sending `Issue` events
+3. In Linear, create a [webhook](https://linear.app/developers/webhooks) pointing to your Buildkite pipeline's webhook URL, sending `Issue` events
 4. Set up the required secrets: `GITHUB_TOKEN`, `BUILDKITE_API_TOKEN`, and `LINEAR_API_TOKEN`
 5. Add the `buildkite-analyze` label to any Linear issue
 
