@@ -1,0 +1,8 @@
+name: "Linear Issue Pipeline Example"
+description: "An example pipeline that uses dynamic pipelines and Claude Code to automatically analyse and work on Linear issues."
+emoji: ":linear:"
+languages:
+  - "TypeScript"
+steps:
+  - label: ":pipeline:"
+    command: "buildkite-agent pipeline upload"
