@@ -119,7 +119,6 @@ async function main() {
 
     console.log(`Webhook action: ${webhookAction}`);
 
-    // TODO: Are these needed?
     buildkiteAgent("meta-data", "set", "webhook:action", webhookAction);
     buildkiteAgent("meta-data", "set", "webhook:source", "linear");
 
